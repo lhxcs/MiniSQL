@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "index/b_plus_tree_index.h"
 
 #include "index/generic_key.h"
