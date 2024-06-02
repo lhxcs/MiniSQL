@@ -8,6 +8,7 @@
  */
 
 TableIterator::TableIterator(TableHeap *table_heap, RowId rid, Txn *txn) {
+  cout<<"|||||||||||||||||||||" << endl;
   row_ = new Row(rid);
   if (rid.GetPageId() != INVALID_PAGE_ID) {
     table_heap_->GetTuple(row_, txn);
@@ -18,31 +19,37 @@ TableIterator::TableIterator(TableHeap *table_heap, RowId rid, Txn *txn) {
 }
 
 TableIterator::TableIterator(const TableIterator &other) {
+  cout<<"|||||||||||||||||||||" << endl;
   table_heap_ = other.table_heap_;
   row_ = other.row_;
 }
 
 TableIterator::~TableIterator() {
-
+  cout<<"|||||||||||||||||||||" << endl;
 }
 
 bool TableIterator::operator==(const TableIterator &itr) const {
+  cout<<"|||||||||||||||||||||" << endl;
   return this->row_ == itr.row_;
 }
 
 bool TableIterator::operator!=(const TableIterator &itr) const {
+  cout<<"|||||||||||||||||||||" << endl;
   return this->row_ != itr.row_;
 }
 
 const Row &TableIterator::operator*() {
+  cout<<"|||||||||||||||||||||" << endl;
   return *row_;
 }
 
 Row *TableIterator::operator->() {
+  cout<<"|||||||||||||||||||||" << endl;
   return row_;
 }
 
 TableIterator &TableIterator::operator=(const TableIterator &itr) noexcept {
+  cout<<"|||||||||||||||||||||" << endl;
   this->table_heap_ = itr.table_heap_;
   this->row_ = itr.row_;
   return *this;
@@ -50,6 +57,7 @@ TableIterator &TableIterator::operator=(const TableIterator &itr) noexcept {
 
 // ++iter
 TableIterator &TableIterator::operator++() {
+  cout<<"|||||||||||||||||||||" << endl;
   if (row_ == nullptr || row_->GetRowId() == INVALID_ROWID) {
     return *this;
   }
@@ -86,6 +94,7 @@ TableIterator &TableIterator::operator++() {
 
 // iter++
 TableIterator TableIterator::operator++(int) { 
+  cout<<"|||||||||||||||||||||" << endl;
   TableIterator p(table_heap_, row_->GetRowId(), nullptr);
   ++(*this);
   return TableIterator{p};
