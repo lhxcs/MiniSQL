@@ -1,8 +1,10 @@
 #include "catalog/table.h"
+#include "glog/logging.h"
 
 uint32_t TableMetadata::SerializeTo(char *buf) const {
   char *p = buf;
   uint32_t ofs = GetSerializedSize();
+  //LOG(INFO) << "ofs " << ofs << endl;
   ASSERT(ofs <= PAGE_SIZE, "Failed to serialize table info.");
   // magic num
   MACH_WRITE_UINT32(buf, TABLE_METADATA_MAGIC_NUM);
@@ -18,8 +20,10 @@ uint32_t TableMetadata::SerializeTo(char *buf) const {
   // table heap root page id
   MACH_WRITE_TO(page_id_t, buf, root_page_id_);
   buf += 4;
+  //LOG(INFO) << "buf number before table schema SerializeTo: " << buf - p << " " << ofs << std::endl;
   // table schema
   buf += schema_->SerializeTo(buf);
+  //LOG(INFO) << "TableMetadata::SerializeTo: " << buf - p << " " << ofs << endl;
   ASSERT(buf - p == ofs, "Unexpected serialize size.");
   return ofs;
 }

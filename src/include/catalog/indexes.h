@@ -67,7 +67,10 @@ class IndexInfo {
     // Step1: init index metadata and table info
     // Step2: mapping index key to key schema
     // Step3: call CreateIndex to create the index
-    ASSERT(false, "Not Implemented yet.");
+    //ASSERT(false, "Not Implemented yet.");
+    this->meta_data_ = meta_data;
+    key_schema_ = Schema::ShallowCopySchema(table_info->GetSchema(), meta_data->GetKeyMapping());
+    index_ = CreateIndex(buffer_pool_manager, "bptree");
   }
 
   inline Index *GetIndex() { return index_; }
@@ -82,9 +85,9 @@ class IndexInfo {
   Index *CreateIndex(BufferPoolManager *buffer_pool_manager, const string &index_type);
 
  private:
-  IndexMetadata *meta_data_;
-  Index *index_;
-  IndexSchema *key_schema_;
+  IndexMetadata *meta_data_; //索引定义时的元信息
+  Index *index_; // 索引操作对象
+  IndexSchema *key_schema_; // 索引的模式信息
 };
 
 #endif  // MINISQL_INDEXES_H
