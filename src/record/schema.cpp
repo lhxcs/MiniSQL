@@ -25,7 +25,7 @@ uint32_t Schema::GetSerializedSize() const {
   for (uint32_t i = 0; i < columns_.size(); i++) {
     cnt += columns_[i]->GetSerializedSize();
   }
-  cout<< "Schema::GetSerializedSize: " << cnt << endl;
+  //cout<< "Schema::GetSerializedSize: " << cnt << endl;
   return cnt;
 }
 
