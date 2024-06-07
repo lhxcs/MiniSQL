@@ -6,11 +6,10 @@
 /**
  * TODO: Student Implement
  */
-
 TableIterator::TableIterator(TableHeap *table_heap, RowId rid, Txn *txn) {
-  cout<<"|||||||||||||||||||||" << endl;
-  row_ = new Row(rid);
+  table_heap_ = table_heap;
   if (rid.GetPageId() != INVALID_PAGE_ID) {
+    row_ = new Row(rid);
     table_heap_->GetTuple(row_, txn);
   } 
   else {
@@ -19,83 +18,73 @@ TableIterator::TableIterator(TableHeap *table_heap, RowId rid, Txn *txn) {
 }
 
 TableIterator::TableIterator(const TableIterator &other) {
-  cout<<"|||||||||||||||||||||" << endl;
   table_heap_ = other.table_heap_;
   row_ = other.row_;
 }
 
 TableIterator::~TableIterator() {
-  cout<<"|||||||||||||||||||||" << endl;
+  delete row_;
 }
 
 bool TableIterator::operator==(const TableIterator &itr) const {
-  cout<<"|||||||||||||||||||||" << endl;
-  return this->row_ == itr.row_;
+  return this->row_->GetRowId() == itr.row_->GetRowId() && this->table_heap_ == itr.table_heap_;
 }
 
 bool TableIterator::operator!=(const TableIterator &itr) const {
-  cout<<"|||||||||||||||||||||" << endl;
-  return this->row_ != itr.row_;
+  return !this->operator==(itr);
 }
 
 const Row &TableIterator::operator*() {
-  cout<<"|||||||||||||||||||||" << endl;
   return *row_;
 }
 
 Row *TableIterator::operator->() {
-  cout<<"|||||||||||||||||||||" << endl;
   return row_;
 }
 
 TableIterator &TableIterator::operator=(const TableIterator &itr) noexcept {
-  cout<<"|||||||||||||||||||||" << endl;
-  this->table_heap_ = itr.table_heap_;
-  this->row_ = itr.row_;
+  this->table_heap_=itr.table_heap_;
+  this->row_=new Row(*itr.row_);
   return *this;
 }
 
-// ++iter
+//++iter
 TableIterator &TableIterator::operator++() {
-  cout<<"|||||||||||||||||||||" << endl;
-  if (row_ == nullptr || row_->GetRowId() == INVALID_ROWID) {
+  if (row_ == nullptr || row_->GetRowId().GetPageId() == INVALID_PAGE_ID) {
     return *this;
   }
   auto page = reinterpret_cast<TablePage *>(table_heap_->buffer_pool_manager_->FetchPage(row_->GetRowId().GetPageId()));
   RowId next_rid;
   page->RLatch();
   if (!page->GetNextTupleRid(row_->GetRowId(), &next_rid)) {
-    while(page->GetNextPageId() != INVALID_PAGE_ID) {
+    page->RUnlatch();
+    if(page->GetNextPageId() != INVALID_PAGE_ID) {
       page_id_t next_page_id = page->GetNextPageId();
-      page->RUnlatch();
-      table_heap_->buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-      page = reinterpret_cast<TablePage *>(table_heap_->buffer_pool_manager_->FetchPage(next_page_id));
-      page->RLatch();
-      if (page->GetFirstTupleRid(&next_rid)) {
-        break;
-      }
+      
+      auto next_page = reinterpret_cast<TablePage *>(this->table_heap_->buffer_pool_manager_->FetchPage(next_page_id));
+      next_page->RLatch();
+      next_page->GetFirstTupleRid(&next_rid);
+      next_page->RUnlatch();
     }
-    if(page->GetNextPageId() == INVALID_PAGE_ID) {
-      delete row_;
-      row_ = new Row(INVALID_ROWID);
-      page->RUnlatch();
-      table_heap_->buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-      return *this;
+    else {
+      next_rid = INVALID_ROWID;
     }
   }
-  page->RUnlatch();
-  table_heap_->buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+  else {
+    page->RUnlatch();
+    table_heap_->buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+  }
   delete row_;
   row_ = new Row(next_rid);
-  table_heap_->GetTuple(row_, nullptr);
+  if(next_rid.GetPageId()!=INVALID_PAGE_ID) {
+    table_heap_->GetTuple(row_, nullptr);
+  }
   return *this;
-
 }
 
 // iter++
-TableIterator TableIterator::operator++(int) { 
-  cout<<"|||||||||||||||||||||" << endl;
-  TableIterator p(table_heap_, row_->GetRowId(), nullptr);
-  ++(*this);
-  return TableIterator{p};
+TableIterator TableIterator::operator++(int) {
+  RowId rid=this->row_->GetRowId();
+  this->operator++();
+  return TableIterator(this->table_heap_,rid,nullptr);
 }

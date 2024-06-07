@@ -58,14 +58,32 @@ TEST_F(RecoveryManagerTest, RecoveryTest) {
     recovery_mgr.AppendLogRec(log);
   }
   auto &db = recovery_mgr.GetDatabase();
+  // std::cout << "initital" << std::endl;
+  // std::cout << "db[A]: " << db["A"] << std::endl;
+  // std::cout << "db[B]: " << db["B"] << std::endl;
+  // std::cout << "db[C]: " << db["C"] << std::endl;
+  // std::cout << "db[D]: " << db["D"] << std::endl;
 
   recovery_mgr.RedoPhase();
+  // std::cout << "after Redo" << std::endl;
+  // std::cout << "db[A]: " << db["A"] << std::endl;
+  // std::cout << "db[B]: " << db["B"] << std::endl;
+  // std::cout << "db[C]: " << db["C"] << std::endl;
+  // std::cout << "db[D]: " << db["D"] << std::endl;
   ASSERT_EQ(db["A"], 2000);
   ASSERT_EQ(db["B"], 1000);
   ASSERT_EQ(db["C"], 800);
   ASSERT_EQ(db["D"], 30000);
 
   recovery_mgr.UndoPhase();
+  // std::cout << "after Undo" << std::endl;
+  // std::cout << "db[A]: " << db["A"] << std::endl;
+  // std::cout << "db[B]: " << db["B"] << std::endl;
+  // std::cout << "db[C]: " << db["C"] << std::endl;
+  // std::cout << "db.cout(C): " << db.count("C") << std::endl;
+  // std::cout << "db[D]: " << db["D"] << std::endl;
+  // std::cout << "db.cout(D): " << db.count("D") << std::endl;
+  // std::cout << "db.cout(E): " << db.count("E") << std::endl;
   ASSERT_EQ(db["A"], 2000);
   ASSERT_EQ(db["B"], 1000);
   ASSERT_EQ(db["C"], 600);
