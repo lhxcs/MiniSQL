@@ -40,7 +40,21 @@ void BPlusTree::Destroy(page_id_t current_page_id) {
   if (IsEmpty()) {
     return;
   }
-  buffer_pool_manager_->DeletePage(current_page_id); // direct delete?
+  // buffer_pool_manager_->DeletePage(current_page_id); // no direct delete!!!
+  if(current_page_id == INVALID_PAGE_ID) {
+    current_page_id = root_page_id_;
+    root_page_id_ = INVALID_PAGE_ID;
+    UpdateRootPageId(2);
+  }
+  auto page = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(current_page_id)->GetData());
+  if(!page->IsLeafPage()) { // recursively
+    auto *inner = reinterpret_cast<InternalPage *>(page);
+    for(int i = page->GetSize() - 1; i >= 0; --i) {
+      Destroy(inner->ValueAt(i));
+    }
+  }
+  buffer_pool_manager_->DeletePage(page->GetPageId());
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
 }
 
 /*
@@ -122,7 +136,9 @@ bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Txn *transac
   auto* Page = FindLeafPage(key);
   auto* leaf_page = reinterpret_cast<LeafPage*>(Page->GetData());
   RowId val;
+  // cout << 666 << endl;
   if (leaf_page->Lookup(key, val, processor_)){
+    // cout << 777 << endl;
     buffer_pool_manager_->UnpinPage(leaf_page->GetPageId(), false);
     return false;
   }
@@ -447,10 +463,13 @@ Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool lef
  */
 void BPlusTree::UpdateRootPageId(int insert_record) {
   auto* rootpage = reinterpret_cast<IndexRootsPage*>(buffer_pool_manager_->FetchPage(INDEX_ROOTS_PAGE_ID)->GetData());
-  if (insert_record){
+  if (insert_record == 1){
     rootpage->Insert(index_id_, root_page_id_); // insert instead of update
-  } else {
+  } else if (insert_record == 0){
     rootpage->Update(index_id_, root_page_id_);
+  }
+  else{
+    rootpage->Delete(index_id_);
   }
   buffer_pool_manager_->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
 }
@@ -459,6 +478,7 @@ void BPlusTree::UpdateRootPageId(int insert_record) {
  * This method is used for debug only, You don't need to modify
  */
 void BPlusTree::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out, Schema *schema) const {
+  cout << "size: " << page->GetSize() << endl;
   std::string leaf_prefix("LEAF_");
   std::string internal_prefix("INT_");
   if (page->IsLeafPage()) {

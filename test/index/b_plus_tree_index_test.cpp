@@ -53,6 +53,7 @@ TEST(BPlusTreeTests, BPlusTreeIndexSimpleTest) {
                               Field(TypeId::kTypeChar, const_cast<char *>("minisql"), 7, true)};
     Row row(fields);
     RowId rid(1000, i);
+    // index->InsertEntry(row, rid, nullptr);
     ASSERT_EQ(DB_SUCCESS, index->InsertEntry(row, rid, nullptr));
   }
   // Test Scan

@@ -1,5 +1,5 @@
 #include <algorithm>
-
+#include <fstream>
 #include "index/b_plus_tree_index.h"
 
 #include "index/generic_key.h"
@@ -14,8 +14,10 @@ dberr_t BPlusTreeIndex::InsertEntry(const Row &key, RowId row_id, Txn *txn) {
   // ASSERT(row_id.Get() != INVALID_ROWID.Get(), "Invalid row id for index insert.");
   GenericKey *index_key = processor_.InitKey();
   processor_.SerializeFromKey(index_key, key, key_schema_);
-
+  // cout << 111 << endl;
   bool status = container_.Insert(index_key, row_id, txn);
+  // std::ofstream outFile("out.dot");
+  // container_.PrintTree(outFile, key_schema_);
   delete index_key;
   //  TreeFileManagers mgr("tree_");
   //  static int i = 0;
