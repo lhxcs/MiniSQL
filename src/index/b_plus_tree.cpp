@@ -478,7 +478,7 @@ void BPlusTree::UpdateRootPageId(int insert_record) {
  * This method is used for debug only, You don't need to modify
  */
 void BPlusTree::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out, Schema *schema) const {
-  cout << "size: " << page->GetSize() << endl;
+  // cout << "size: " << page->GetSize() << endl;
   std::string leaf_prefix("LEAF_");
   std::string internal_prefix("INT_");
   if (page->IsLeafPage()) {
