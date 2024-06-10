@@ -18,7 +18,7 @@ dberr_t BPlusTreeIndex::InsertEntry(const Row &key, RowId row_id, Txn *txn) {
   bool status = container_.Insert(index_key, row_id, txn);
   // std::ofstream outFile("out.dot");
   // container_.PrintTree(outFile, key_schema_);
-  delete index_key;
+  free(index_key);
   //  TreeFileManagers mgr("tree_");
   //  static int i = 0;
   //  if (i % 10 == 0) container_.PrintTree(mgr[i]);
@@ -35,7 +35,7 @@ dberr_t BPlusTreeIndex::RemoveEntry(const Row &key, RowId row_id, Txn *txn) {
   processor_.SerializeFromKey(index_key, key, key_schema_);
 
   container_.Remove(index_key, txn);
-  delete index_key;
+  free(index_key);
   return DB_SUCCESS;
 }
 
@@ -75,7 +75,7 @@ dberr_t BPlusTreeIndex::ScanKey(const Row &key, vector<RowId> &result, Txn *txn,
     if (container_.GetValue(index_key, temp, txn))
       result.erase(find(result.begin(), result.end(), temp[0]));
   }
-  delete index_key;
+  free(index_key);
   if (!result.empty())
     return DB_SUCCESS;
   else
