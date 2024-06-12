@@ -176,10 +176,9 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   next_index_id_++;
   table_id_t table_id = table_names_[table_name];
   TableInfo* table_info = tables_[table_id];
-
+  uint32_t column_index;
   std::vector<uint32_t> key_map;
   for(const auto &iter: index_keys) {
-    uint32_t column_index;
     if(table_info->GetSchema()->GetColumnIndex(iter, column_index) == DB_COLUMN_NAME_NOT_EXIST) {
       return DB_COLUMN_NAME_NOT_EXIST;
     }
@@ -189,6 +188,25 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   index_info = IndexInfo::Create();
   IndexMetadata *index_meta_data = IndexMetadata::Create(index_id, index_name, table_id, key_map);
   index_info->Init(index_meta_data, table_info, buffer_pool_manager_);
+
+  auto itr = table_info->GetTableHeap()->Begin(txn);
+  vector<u_int32_t> column_idx;
+  vector<Column *> columns = index_info->GetIndexKeySchema()->GetColumns();
+  for(auto column: columns) {
+    uint32_t column_id;
+    if(table_info->GetSchema()->GetColumnIndex(column->GetName(), column_id) == DB_SUCCESS) {
+      column_idx.push_back(column_id);
+    }
+  }
+  for(; itr != table_info->GetTableHeap()->End(); itr++) {
+    Row tmp = *itr;
+    vector<Field> fields;
+    for(auto idx: column_idx) {
+      fields.push_back(*tmp.GetField(idx));
+    }
+    Row index_row(fields);
+    index_info->GetIndex()->InsertEntry(index_row, tmp.GetRowId(), txn);
+  }
   page_id_t page_id;
   Page* page = buffer_pool_manager_->NewPage(page_id);
   index_meta_data->SerializeTo(page->GetData());
